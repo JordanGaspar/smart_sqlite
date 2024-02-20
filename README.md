@@ -5,11 +5,13 @@ g++ your_main_file.cpp smart_sqlite.cpp -lsqlite3 -std=c++23
 ```
 
 # compile with cmake
+```bash
 cd smart_sqlite
 mkdir build
 cmake -S . -B build
 cd build
 make all
+```
 
 # usage
 
