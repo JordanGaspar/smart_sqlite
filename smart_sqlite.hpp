@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include <memory>
 #include <span>
+#include <string>
 #include <string_view>
 #include <variant>
 #include <vector>
@@ -105,6 +106,7 @@ public:
   typedef std::shared_ptr<stmt> stmt_t;
 
   sqlite(const char *file_name);
+  ~sqlite();
   stmt_t prepare(std::string_view query);
   void exec(const char *query,
             int (*callback)(void *, int, char **, char **) = nullptr,

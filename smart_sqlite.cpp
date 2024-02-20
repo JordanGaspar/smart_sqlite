@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "smart_sqlite.hpp"
+#include <smart_sqlite.hpp>
 // #include <iostream>
 #include <memory>
 #include <new>
@@ -194,6 +194,8 @@ sqlite::sqlite(const char *file_name) : pimpl(new impl) {
   pimpl->db.reset(db, [=](sqlite3 *db) { sqlite3_close_v2(db); });
 }
 
+sqlite::~sqlite() {}
+
 sqlite::stmt_t sqlite::prepare(std::string_view query) {
   return sqlite::stmt_t(new stmt(this, query));
 }
@@ -241,24 +243,24 @@ sqlite::stmt::table_t sqlite::stmt::step() {
         case (SQLITE3_TEXT): {
           auto ptr = sqlite3_column_text(stmt.get(), i);
           auto size = sqlite3_column_bytes(stmt.get(), i);
-          row.emplace_back(std::string(ptr, ptr + size));
+          row.emplace_back(cell_t{std::string(ptr, ptr + size)});
           break;
         }
         case (SQLITE_INTEGER):
-          row.emplace_back(sqlite3_column_int(stmt.get(), i));
+          row.emplace_back(cell_t{sqlite3_column_int(stmt.get(), i)});
           break;
         case (SQLITE_FLOAT):
-          row.emplace_back(sqlite3_column_double(stmt.get(), i));
+          row.emplace_back(cell_t{sqlite3_column_double(stmt.get(), i)});
           break;
         case (SQLITE_BLOB): {
           auto ptr = reinterpret_cast<const char *>(
               sqlite3_column_blob(stmt.get(), i));
           auto size = sqlite3_column_bytes(stmt.get(), i);
-          row.emplace_back(std::vector<char>(ptr, ptr + size));
+          row.emplace_back(cell_t{std::vector<char>(ptr, ptr + size)});
           break;
         }
         case (SQLITE_NULL):
-          row.emplace_back(nullptr);
+          row.emplace_back(cell_t{nullptr});
           break;
         default:
           break;
@@ -305,27 +307,28 @@ sqlite::stmt::column_with_name_t sqlite::stmt::step_with_column_name() {
         case (SQLITE3_TEXT): {
           auto ptr = sqlite3_column_text(stmt.get(), i);
           auto size = sqlite3_column_bytes(stmt.get(), i);
-          column_with_name[col_name].emplace_back(std::string(ptr, ptr + size));
+          column_with_name[col_name].emplace_back(
+              cell_t{std::string(ptr, ptr + size)});
           break;
         }
         case (SQLITE_INTEGER):
           column_with_name[col_name].emplace_back(
-              sqlite3_column_int(stmt.get(), i));
+              cell_t{sqlite3_column_int(stmt.get(), i)});
           break;
         case (SQLITE_FLOAT):
           column_with_name[col_name].emplace_back(
-              sqlite3_column_double(stmt.get(), i));
+              cell_t{sqlite3_column_double(stmt.get(), i)});
           break;
         case (SQLITE_BLOB): {
           auto ptr = reinterpret_cast<const char *>(
               sqlite3_column_blob(stmt.get(), i));
           auto size = sqlite3_column_bytes(stmt.get(), i);
           column_with_name[col_name].emplace_back(
-              std::vector<char>(ptr, ptr + size));
+              cell_t{std::vector<char>(ptr, ptr + size)});
           break;
         }
         case (SQLITE_NULL):
-          column_with_name[col_name].emplace_back(nullptr);
+          column_with_name[col_name].emplace_back(cell_t{nullptr});
           break;
         default:
           break;
@@ -394,54 +397,3 @@ std::vector<char> sqlite::stmt::cell_t::as_blob() {
 }
 
 std::nullptr_t sqlite::stmt::cell_t::as_null() { return nullptr; }
-
-// example
-/*int main() {
-  sqlite db("file.sqlite");
-
-  db.exec("create table if not exists test (name text, password text, age "
-          "integer, balance float);");
-  db.exec("insert into test (name, password, age, balance) values ('Jordan', "
-          "'123456', 30, "
-          "450.30), "
-          "('User123', '654321random@', 36, 750.30), ('Opuscopus', "
-          "'somerandom', 13, 5.43);");
-
-  auto stmt = db.prepare("select name, password, age, balance from test;");
-
-  std::cout << "Only values: \n" << std::endl;
-
-  auto step = stmt->step();
-
-  for (auto x : step) {
-    auto name = x[0].as_text();
-    auto password = x[1].as_text();
-    auto age = x[2].as_integer();
-    auto balance = x[3].as_float();
-
-    printf("Name: %s; Password: %s; Age: %lld; Balance: %f\n", name.c_str(),
-           password.c_str(), age, balance);
-  }
-
-  std::cout << "\nWith names: \n" << std::endl;
-
-  auto with_name = stmt->step_with_column_name();
-
-  auto name_column = with_name["name"];
-  auto password_column = with_name["password"];
-  auto age_column = with_name["age"];
-  auto balance_column = with_name["balance"];
-
-  auto ziped = std::ranges::views::zip(name_column, password_column, age_column,
-                                       balance_column);
-
-  for (auto [name, password, age, balance] : ziped) {
-    printf("Name: %s; Password: %s; Age: %lld; Balance: %f\n",
-           name.as_text().c_str(), password.as_text().c_str(), age.as_integer(),
-           balance.as_float());
-  }
-
-  std::cout << std::endl;
-
-  return 0;
-}*/
