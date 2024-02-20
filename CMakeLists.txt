@@ -24,6 +24,6 @@ install(TARGETS smart_sqlite
 set(CPACK_GENERATOR "DEB;RPM")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jordan Gaspar <contato@jordangaspar.com>")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsqlite3 (>= 3.40)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsqlite3-dev (>= 3.40)")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C++ Wrapper for SQLite3 using Smart Pointers.")
 include(CPack)
